@@ -12,10 +12,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg # Importa esta c
 import os # Importa el módulo os para interactuar con el sistema operativo (borrar archivos temporales).
 
 # Define la tasa de muestreo para la grabación de audio.
-# Una tasa de 44100 Hz es estándar para audio de calidad.
-MUESTREO = 44100  
+# Una tasa de 44100 Hz es estándar para audio de calidad, imita analogico.
+SAMPLE_RATE_REC = 44100  
 # Nombre del archivo temporal donde se guardará la grabación antes de procesarla.
-TEMP = "temp_recording.wav"
+TEMP_REC_FILENAME = "temp_recording.wav"
 
 class AudioConverterApp:
     """
@@ -27,54 +27,56 @@ class AudioConverterApp:
         
         self.root = root 
         self.root.title("Conversor de Audio Analógico a Digital")
-        self.root.geometry("1000x800") 
-
+        self.root.geometry("1700x800")
+        self.root.configure(bg="#fefae0")
+        
         # Variables de instancia para almacenar los datos de audio y la ruta del archivo.
         self.audio_original = None      # Almacena el objeto AudioSegment del audio grabado original.
         self.audio_digitalizado = None  # Almacena el objeto AudioSegment del audio después de la conversión.
         self.ruta_archivo = None        # Guarda la ruta del archivo temporal de la grabación.
 
         # Frames para organizar la Interfaz Gráfica (GUI)
-        # Un frame para los controles 
-        control_frame = ttk.Frame(root, padding="10")
+        # Un frame para los controles
+        control_frame = tk.Frame(root, padx=10, pady=10, bg="#8d99ae")
         control_frame.pack(side=tk.TOP, fill=tk.X) # Empaqueta el frame en la parte superior, expandiéndose horizontalmente.
 
         # Un frame para los gráficos de espectro.
-        plot_frame = ttk.Frame(root, padding="10")
+        plot_frame = tk.Frame(root, padx=10, pady=10, bg="#8d99ae")
         plot_frame.pack(side=tk.TOP, fill=tk.BOTH, expand=True) # Empaqueta el frame en la parte superior, llenando el espacio restante.
-
-        # Controles de Grabación de Duración Personalizada
+        
+        # --- Controles de Grabación de Duración Personalizada ---
         # Etiqueta para indicar al usuario qué ingresar.
-        ttk.Label(control_frame, text="Duración (segundos):").pack(side=tk.LEFT, padx=(5, 5))
+        tk.Label(control_frame, text="Duración (segundos):", font=("Arial",18,"bold"), bg="#8d99ae").pack(side=tk.LEFT, padx=(5, 5))
         # Campo de entrada (Entry) donde el usuario puede escribir la duración de la grabación.
-        self.entry_duracion = ttk.Entry(control_frame, width=8)
+        self.entry_duracion = tk.Entry(control_frame, width=8, font=("Arial", 16))
         self.entry_duracion.insert(0, "5") # Inserta "5" como valor predeterminado al inicio.
         self.entry_duracion.pack(side=tk.LEFT, padx=5)
         
         # Botón para iniciar la grabación. Llama al método grabar_audio_personalizado.
-        ttk.Button(control_frame, text="Grabar Audio", command=self.grabar_audio_personalizado).pack(side=tk.LEFT, padx=5)
+        tk.Button(control_frame, text="Grabar Audio", padx=10,
+                pady=2,bg="#e5989b", fg="white", activebackground="#588157",font=("Arial", 15, "bold"),command=self.grabar_audio_personalizado).pack(side=tk.LEFT, padx=6)
 
-        # Controles de Conversión (Muestreo y Cuantización) 
+        # --- Controles de Conversión (Muestreo y Cuantización) ---
         # Etiqueta para el control de muestreo.
-        ttk.Label(control_frame, text="Muestreo (Hz):").pack(side=tk.LEFT, padx=(15, 5))
+        tk.Label(control_frame, text="Muestreo (Hz):",font=("Arial",18,"bold"),bg="#8d99ae").pack(side=tk.LEFT, padx=(15, 5))
         # Combobox para seleccionar la tasa de muestreo.
-        self.combo_muestreo = ttk.Combobox(control_frame, values=["44100", "22050", "16000", "8000"])
+        self.combo_muestreo = ttk.Combobox(control_frame, width=10, font=("Arial", 16), values=["44100", "22050", "16000", "8000"], style="Estilos.TCombobox")
         self.combo_muestreo.set("22050") # Establece "22050" como opción preseleccionada.
         self.combo_muestreo.pack(side=tk.LEFT, padx=5)
 
         # Etiqueta para el control de cuantización.
-        ttk.Label(control_frame, text="Cuantización (bits):").pack(side=tk.LEFT, padx=(15, 5))
+        tk.Label(control_frame, text="Cuantización (bits):",font=("Arial",18,"bold"),bg="#8d99ae").pack(side=tk.LEFT, padx=(15, 5))
         # Combobox para seleccionar la profundidad de bits (cuantización).
-        self.combo_cuantizacion = ttk.Combobox(control_frame, values=["16", "8"])
+        self.combo_cuantizacion = ttk.Combobox(control_frame,width=10, font=("Arial", 16), values=["16", "8"], style="Estilos.TCombobox")
         self.combo_cuantizacion.set("16") # Establece "16" como opción preseleccionada.
-        self.combo_cuantizacion.pack(side=tk.LEFT, padx=5) 
+        self.combo_cuantizacion.pack(side=tk.LEFT, padx=5)
 
         # Botón para iniciar el proceso de conversión.
-        ttk.Button(control_frame, text="Convertir", command=self.convertir_audio).pack(side=tk.LEFT, padx=15)
+        tk.Button(control_frame, text="Convertir",bg="#e5989b",fg="white",activebackground="#588157",font=("Arial", 15, "bold"), command=self.convertir_audio).pack(side=tk.LEFT, padx=15)
         # Botón para exportar el audio digitalizado.
-        ttk.Button(control_frame, text="Exportar (WAV/MP3)", command=self.exportar_audio).pack(side=tk.LEFT, padx=5)
+        tk.Button(control_frame, text="Exportar (WAV/MP3)",bg="#e5989b",fg="white",activebackground="#588157",font=("Arial", 15, "bold"),command=self.exportar_audio).pack(side=tk.LEFT, padx=5)
 
-        # Área de Gráficos (Matplotlib)
+        # --- Área de Gráficos (Matplotlib) ---
         # Crea una figura de Matplotlib con dos subplots (ax1 para original, ax2 para digitalizado).
         self.fig, (self.ax1, self.ax2) = plt.subplots(2, 1, figsize=(10, 7), sharex=True)
         # Crea un lienzo (canvas) para integrar la figura de Matplotlib en el frame de Tkinter.
@@ -88,7 +90,7 @@ class AudioConverterApp:
         Esto asegura que los ejes estén etiquetados y los títulos sean visibles
         incluso antes de que se grabe o convierta el audio.
         """
-        self.ax1.set_title("Espectro de Frecuencia - Audio Analógico")
+        self.ax1.set_title("Espectro de Frecuencia - Audio Original (Grabado)")
         self.ax1.set_ylabel("Frecuencia (Hz)")
         self.ax2.set_title("Espectro de Frecuencia - Audio Digitalizado")
         self.ax2.set_xlabel("Tiempo (s)")
@@ -121,21 +123,21 @@ class AudioConverterApp:
 
             messagebox.showinfo("Grabando", f"Se grabará audio durante {duracion:.1f} segundos.")
             # Inicia la grabación usando sounddevice.
-            # int(duracion * MUESTREO) calcula el número total de fotogramas a grabar.
+            # int(duracion * SAMPLE_RATE_REC) calcula el número total de fotogramas a grabar.
             # channels=1 para grabación mono, dtype='float64' para alta precisión.
-            grabacion = sd.rec(int(duracion * MUESTREO), samplerate=MUESTREO, channels=1, dtype='float64')
+            grabacion = sd.rec(int(duracion * SAMPLE_RATE_REC), samplerate=SAMPLE_RATE_REC, channels=1, dtype='float64')
             sd.wait()  # Espera hasta que la grabación (el array 'grabacion') se haya completado.
 
             # Guarda los datos de la grabación (NumPy array) en un archivo WAV temporal.
             # sampwidth=3 significa que se guardará como 24-bit PCM (float64 se mapea a esto).
-            wavio.write(TEMP, grabacion, MUESTREO, sampwidth=3) 
+            wavio.write(TEMP_REC_FILENAME, grabacion, SAMPLE_RATE_REC, sampwidth=3) 
 
             # Carga el archivo WAV temporal en un objeto AudioSegment de pydub.
-            self.ruta_archivo = TEMP
+            self.ruta_archivo = TEMP_REC_FILENAME
             self.audio_original = AudioSegment.from_file(self.ruta_archivo)
             
-            # Muestra el espectrograma del audio recién grabado.
-            self.mostrar_espectro(self.audio_original, self.ax1, "Espectro de Frecuencia - Audio Analógico")
+            # Muestra el espectrograma del audio recién grabado en el primer subplot.
+            self.mostrar_espectro(self.audio_original, self.ax1, "Espectro de Frecuencia - Audio Grabado")
             messagebox.showinfo("Éxito", f"Audio de {duracion:.1f} segundos grabado y listo para convertir.")
 
         except ValueError:
@@ -149,13 +151,14 @@ class AudioConverterApp:
         """
         1. Verifica si hay un audio grabado para convertir.
         2. Obtiene los valores de muestreo y cuantización seleccionados por el usuario.
-        3. Realiza el muestreo del audio usando pydub.
+        3. Realiza el remuestreo (sampling) del audio usando pydub.
         4. Cambia la profundidad de bits (cuantización) del audio remuestreado.
         5. Muestra el espectrograma del audio digitalizado.
         """
         if not self.audio_original:
             messagebox.showwarning("Advertencia", "Primero grabe un audio.")
-            return 
+            return # Sale de la función si no hay audio grabado.
+
         try:
             # Obtiene la nueva frecuencia de muestreo
             nueva_frecuencia = int(self.combo_muestreo.get())
@@ -186,9 +189,11 @@ class AudioConverterApp:
         4. Calcula el espectrograma Mel (Mel-spectrogram) usando librosa.
         5. Convierte la potencia a decibelios (dB) para una mejor visualización.
         6. Dibuja el espectrograma en el eje de Matplotlib.
+        7. Actualiza el lienzo de Tkinter para mostrar los cambios.
 
-        audio_segment (pydub.AudioSegment): El segmento de audio a analizar.
-        ax (matplotlib.axes.Axes): El objeto de eje de Matplotlib donde se dibujará el espectrograma.
+
+            audio_segment (pydub.AudioSegment): El segmento de audio a analizar.
+            ax (matplotlib.axes.Axes): El objeto de eje de Matplotlib donde se dibujará el espectrograma.
           
         """
         # Convierte el AudioSegment a un array de NumPy de tipo float32.
@@ -249,14 +254,22 @@ class AudioConverterApp:
         Su propósito principal es limpiar el archivo de grabación temporal.
         """
         # Verifica si el archivo temporal existe y, si es así, lo elimina.
-        if os.path.exists(TEMP):
-            os.remove(TEMP)
+        if os.path.exists(TEMP_REC_FILENAME):
+            os.remove(TEMP_REC_FILENAME)
         self.root.destroy() # Cierra la ventana de Tkinter y termina la aplicación.
 
 if __name__ == "__main__":
     
     root = tk.Tk() # Crea la ventana principal de Tkinter.
+    
+    #VER 
+    style = ttk.Style()
+    style.theme_use("clam")
+    style.configure("Estilos.TCombobox", 
+                background="#e5989b",    
+                foreground="black",
+                font=("Arial", 16))
     app = AudioConverterApp(root) # Crea una instancia de la aplicación.
     # Configura un protocolo para manejar el evento de cierre de ventana.
     root.protocol("WM_DELETE_WINDOW", app.on_closing)
-    root.mainloop() # Inicia el bucle principal de Tkinter, que espera eventos.
+    root.mainloop() # Inicia el bucle principal de Tkinter, que espera eventos (clics, entradas, etc.).
