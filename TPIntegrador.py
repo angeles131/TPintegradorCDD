@@ -46,7 +46,7 @@ class AudioConverterApp:
         
         # --- Controles de Grabación de Duración Personalizada ---
         # Etiqueta para indicar al usuario qué ingresar.
-        tk.Label(control_frame, text="Duración (segundos):", font=("Arial",18,"bold"), bg="#8d99ae").pack(side=tk.LEFT, padx=(5, 5))
+        tk.Label(control_frame, text="Duración (segundos):", font=("Arial",15,"bold"), bg="#8d99ae").pack(side=tk.LEFT, padx=(5, 5))
         # Campo de entrada (Entry) donde el usuario puede escribir la duración de la grabación.
         self.entry_duracion = tk.Entry(control_frame, width=8, font=("Arial", 16))
         self.entry_duracion.insert(0, "5") # Inserta "5" como valor predeterminado al inicio.
@@ -54,27 +54,27 @@ class AudioConverterApp:
         
         # Botón para iniciar la grabación. Llama al método grabar_audio_personalizado.
         tk.Button(control_frame, text="Grabar Audio", padx=10,
-                pady=2,bg="#e5989b", fg="white", activebackground="#588157",font=("Arial", 15, "bold"),command=self.grabar_audio_personalizado).pack(side=tk.LEFT, padx=6)
+                pady=2,bg="#e5989b", fg="white", activebackground="#588157",font=("Arial", 14, "bold"),command=self.grabar_audio_personalizado).pack(side=tk.LEFT, padx=6)
 
         # --- Controles de Conversión (Muestreo y Cuantización) ---
         # Etiqueta para el control de muestreo.
-        tk.Label(control_frame, text="Muestreo (Hz):",font=("Arial",18,"bold"),bg="#8d99ae").pack(side=tk.LEFT, padx=(15, 5))
+        tk.Label(control_frame, text="Muestreo (Hz):",font=("Arial",14,"bold"),bg="#8d99ae").pack(side=tk.LEFT, padx=(15, 5))
         # Combobox para seleccionar la tasa de muestreo.
         self.combo_muestreo = ttk.Combobox(control_frame, width=10, font=("Arial", 16), values=["44100", "22050", "16000", "8000"], style="Estilos.TCombobox")
         self.combo_muestreo.set("22050") # Establece "22050" como opción preseleccionada.
         self.combo_muestreo.pack(side=tk.LEFT, padx=5)
 
         # Etiqueta para el control de cuantización.
-        tk.Label(control_frame, text="Cuantización (bits):",font=("Arial",18,"bold"),bg="#8d99ae").pack(side=tk.LEFT, padx=(15, 5))
+        tk.Label(control_frame, text="Cuantización (bits):",font=("Arial",15,"bold"),bg="#8d99ae").pack(side=tk.LEFT, padx=(15, 5))
         # Combobox para seleccionar la profundidad de bits (cuantización).
         self.combo_cuantizacion = ttk.Combobox(control_frame,width=10, font=("Arial", 16), values=["16", "8"], style="Estilos.TCombobox")
         self.combo_cuantizacion.set("16") # Establece "16" como opción preseleccionada.
         self.combo_cuantizacion.pack(side=tk.LEFT, padx=5)
 
         # Botón para iniciar el proceso de conversión.
-        tk.Button(control_frame, text="Convertir",bg="#e5989b",fg="white",activebackground="#588157",font=("Arial", 15, "bold"), command=self.convertir_audio).pack(side=tk.LEFT, padx=15)
+        tk.Button(control_frame, text="Convertir",bg="#e5989b",fg="white",activebackground="#588157",font=("Arial", 14, "bold"), command=self.convertir_audio).pack(side=tk.LEFT, padx=15)
         # Botón para exportar el audio digitalizado.
-        tk.Button(control_frame, text="Exportar (WAV/MP3)",bg="#e5989b",fg="white",activebackground="#588157",font=("Arial", 15, "bold"),command=self.exportar_audio).pack(side=tk.LEFT, padx=5)
+        tk.Button(control_frame, text="Exportar (WAV/MP3)",bg="#e5989b",fg="white",activebackground="#588157",font=("Arial", 14, "bold") ,command=self.exportar_audio).pack(side=tk.LEFT,padx=5)
 
         # --- Área de Gráficos (Matplotlib) ---
         # Crea una figura de Matplotlib con dos subplots (ax1 para original, ax2 para digitalizado).
@@ -268,7 +268,7 @@ if __name__ == "__main__":
     style.configure("Estilos.TCombobox", 
                 background="#e5989b",    
                 foreground="black",
-                font=("Arial", 16))
+                font=("Arial", 13))
     app = AudioConverterApp(root) # Crea una instancia de la aplicación.
     # Configura un protocolo para manejar el evento de cierre de ventana.
     root.protocol("WM_DELETE_WINDOW", app.on_closing)
