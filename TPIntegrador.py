@@ -136,6 +136,8 @@ class AudioConverterApp:
         ax.clear()
         ax.plot(fft_freq, fft_magnitude)
         ax.set_title(title)
+        ax.set_xlabel("Frecuencia (Hz)")
+        ax.set_ylabel("Amplitud")
         ax.set_xlim(0, audio_segment.frame_rate / 2)  # Mostrar hasta la frecuencia Nyquist
         ax.grid(True)
         
