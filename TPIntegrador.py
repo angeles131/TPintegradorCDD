@@ -103,46 +103,85 @@ class AudioConverterApp:
 
         try:
             nueva_frecuencia = int(self.combo_muestreo.get())
-            nueva_profundidad_bits = int(self.combo_cuantizacion.get())
-            
-            audio_muestreado = self.audio_original.set_frame_rate(nueva_frecuencia)
-            self.audio_digitalizado = audio_muestreado.set_sample_width(nueva_profundidad_bits // 8)
+            profundidad_bits = int(self.combo_cuantizacion.get())
 
-            # Mostrar espectro de frecuencia en lugar de espectrograma
+            # Cambiar frecuencia de muestreo
+            audio_muestreado = self.audio_original.set_frame_rate(nueva_frecuencia)
+
+            # Convertir AudioSegment a numpy float32 [-1, 1]
+            samples = np.array(audio_muestreado.get_array_of_samples()).astype(np.float32)
+
+            max_val = float(2 ** (audio_muestreado.sample_width * 8 - 1))
+            samples /= max_val  # Normalizar a [-1, 1]
+
+            # Cuantización
+            niveles = 2 ** profundidad_bits
+            samples_norm = (samples + 1) / 2  # [0,1]
+            samples_cuant = np.round(samples_norm * (niveles - 1))
+            samples_cuant = (samples_cuant / (niveles - 1)) * 2 - 1  # volver a [-1,1]
+
+            # Codificación a entero con el nuevo sample_width
+            nuevo_sample_width = profundidad_bits // 8
+            max_cuant_val = float(2 ** (profundidad_bits - 1))
+            if profundidad_bits == 16:
+                dtype = np.int16
+            elif profundidad_bits == 8:
+                dtype = np.int8
+            else:
+                raise ValueError("Profundidad de bits no soportada")
+
+            samples_out = (samples_cuant * max_cuant_val).astype(dtype)
+
+
+            # Crear nuevo AudioSegment con los datos cuantizados
+            self.audio_digitalizado = AudioSegment(
+            samples_out.tobytes(),
+            frame_rate=nueva_frecuencia,
+            sample_width=nuevo_sample_width,
+            channels=audio_muestreado.channels
+            )
+
+            # Mostrar espectro de frecuencia
             self.mostrar_espectro_frecuencia(self.audio_digitalizado, self.ax2, "Espectro de Frecuencia - Audio Digitalizado")
-            
+
             messagebox.showinfo("Éxito", "Audio convertido. Ahora puede exportarlo.")
 
         except Exception as e:
             messagebox.showerror("Error de Conversión", f"Ocurrió un error: {e}")
 
+
     def mostrar_espectro_frecuencia(self, audio_segment, ax, title):
-        """Muestra el espectro de frecuencia (FFT) del audio en el eje especificado."""
+        """Muestra el espectro de frecuencia (FFT) del audio en escala logarítmica (dB)."""
         samples = np.array(audio_segment.get_array_of_samples()).astype(np.float32)
-        
+    
         if audio_segment.sample_width > 1:
             samples /= np.iinfo(f"int{audio_segment.sample_width*8}").max
 
-        # Calcular la FFT
+        # Normalizar para evitar problemas si la señal es muy pequeña
+        samples /= np.max(np.abs(samples)) + 1e-9
+
         n = len(samples)
         fft_result = np.fft.fft(samples)
         fft_freq = np.fft.fftfreq(n, d=1/audio_segment.frame_rate)
-        
-        # Tomar solo la mitad (frecuencias positivas)
+
         half_n = n // 2
         fft_freq = fft_freq[:half_n]
         fft_magnitude = np.abs(fft_result[:half_n])
 
+        # Convertir a dB, evitar log(0) sumando epsilon pequeño
+        fft_magnitude_db = 20 * np.log10(fft_magnitude + 1e-9)
+
         ax.clear()
-        ax.plot(fft_freq, fft_magnitude)
+        ax.plot(fft_freq, fft_magnitude_db, color="tab:blue", linewidth=0.8)
         ax.set_title(title)
         ax.set_xlabel("Frecuencia (Hz)")
-        ax.set_ylabel("Amplitud")
-        ax.set_xlim(0, audio_segment.frame_rate / 2)  # Mostrar hasta la frecuencia Nyquist
+        ax.set_ylabel("Amplitud (dB)")
+        ax.set_xlim(0, audio_segment.frame_rate / 2)
         ax.grid(True)
-        
+
         self.fig.tight_layout()
         self.canvas.draw()
+
 
     def exportar_audio(self):
         if not self.audio_digitalizado:
